@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using LibTessDotNet.Double;
 
 namespace Xbim.Tessellator
 {

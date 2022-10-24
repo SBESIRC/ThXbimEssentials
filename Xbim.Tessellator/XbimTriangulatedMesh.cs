@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using Xbim.Common.Geometry;
+using LibTessDotNet.Double;
 using Xbim.Tessellator;
 
 namespace Xbim.Tessellator
 {
-
-
     public class XbimTriangulatedMesh
     {
         public struct  XbimTriangle
@@ -203,7 +202,7 @@ namespace Xbim.Tessellator
                     foreach (var edge in t)
                     {
                         if (isMax(_vertices[edge.StartVertexIndex])
-                            && !Vec3.Colinear(_vertices[edge.StartVertexIndex].Position, _vertices[edge.NextEdge.StartVertexIndex].Position, _vertices[edge.NextEdge.NextEdge.StartVertexIndex].Position))
+                            && !Vec3Extension.Colinear(_vertices[edge.StartVertexIndex].Position, _vertices[edge.NextEdge.StartVertexIndex].Position, _vertices[edge.NextEdge.NextEdge.StartVertexIndex].Position))
                         {
                             return t;
                         }
@@ -301,7 +300,7 @@ namespace Xbim.Tessellator
                             }
                             //if the edge is sharp and the triangle is not colinear, start here
                             var nextAngle = nextConnectedEdge.Angle;
-                            if (nextAngle > minAngle && nextConnectedEdge.Normal.IsValid)
+                            if (nextAngle > minAngle && nextConnectedEdge.Normal.IsValid())
                             {
                                 freeEdges = new List<XbimTriangleEdge>(1) { nextConnectedEdge };
                                 break;
@@ -322,7 +321,7 @@ namespace Xbim.Tessellator
                     {
                         visited.Add(nextConnectedEdge.EdgeId);
                         var nextConnectedEdgeCandidate = nextConnectedEdge.NextEdge.NextEdge.AdjacentEdge;
-                        while (nextConnectedEdgeCandidate != null && !visited.Contains(nextConnectedEdgeCandidate.EdgeId) && !nextConnectedEdgeCandidate.Normal.IsValid) //skip colinear triangles
+                        while (nextConnectedEdgeCandidate != null && !visited.Contains(nextConnectedEdgeCandidate.EdgeId) && !nextConnectedEdgeCandidate.Normal.IsValid()) //skip colinear triangles
                         {
                             //set the colinear triangle to have the same normals as the current edge
                             nextConnectedEdgeCandidate.Normal = nextConnectedEdge.Normal;
@@ -339,7 +338,7 @@ namespace Xbim.Tessellator
                                 break; //we are looping or at the start                       
                             //if the edge is sharp start a new face
                             var angle = nextConnectedEdge.Angle;                      
-                            if ( angle > minAngle && nextConnectedEdge.Normal.IsValid)
+                            if ( angle > minAngle && nextConnectedEdge.Normal.IsValid())
                             {
                                 face = new List<XbimTriangleEdge>();
                                 faceSet.Add(face);
@@ -357,9 +356,9 @@ namespace Xbim.Tessellator
                     var vertexNormal = Vec3.Zero;
                     foreach (var edge in vertexEdges)
                     {
-                        if (edge.Normal.IsValid)
+                        if (edge.Normal.IsValid())
                         {
-                            Vec3.AddTo(ref vertexNormal, ref edge.Normal);
+                            Vec3Extension.AddTo(ref vertexNormal, ref edge.Normal);
                         }                      
                     }
 
@@ -475,7 +474,7 @@ namespace Xbim.Tessellator
         /// <summary>
         /// Calculates the normal for a connected triangle edge, assumes the edge is part of a complete triangle and there are 3 triangle edges
         /// </summary>
-        public bool ComputeTriangleNormal(XbimTriangleEdge[] edges)
+        public void ComputeTriangleNormal(XbimTriangleEdge[] edges)
         {
             var p1 = _vertices[edges[0].StartVertexIndex].Position;
             var p2 = _vertices[edges[0].NextEdge.StartVertexIndex].Position;
@@ -489,15 +488,17 @@ namespace Xbim.Tessellator
                             (by - ay) * (cz - az) - (bz - az) * (cy - ay),
                             (bz - az) * (cx - ax) - (bx - ax) * (cz - az),
                             (bx - ax) * (cy - ay) - (by - ay) * (cx - ax)
-                );            
-            if (Vec3.Normalize(ref v))
-            {
-                edges[0].Normal = v;
-                edges[1].Normal = v;
-                edges[2].Normal = v;
-                return true;
-            }
-            return false;
+                );
+            Vec3.Normalize(ref v);
+            Array.ForEach(edges, e => e.Normal = v);
+            //if (Vec3.Normalize(ref v))
+            //{
+            //    edges[0].Normal = v;
+            //    edges[1].Normal = v;
+            //    edges[2].Normal = v;
+            //    return true;
+            //}
+            //return false;
         }
 
         /// <summary>
@@ -538,7 +539,7 @@ namespace Xbim.Tessellator
                 return pos;
             }
             else
-                return _vertices[v].Data;
+                return (int)_vertices[v].Data;
         }
 
         /// <summary>
@@ -642,8 +643,8 @@ public class XbimTriangleEdge
         get
         {
             
-            if (AdjacentEdge!=null && Normal.IsValid && AdjacentEdge.NextEdge.Normal.IsValid)
-                return Vec3.Angle(ref Normal, ref AdjacentEdge.NextEdge.Normal);
+            if (AdjacentEdge!=null && Normal.IsValid() && AdjacentEdge.NextEdge.Normal.IsValid())
+                return Vec3Extension.Angle(ref Normal, ref AdjacentEdge.NextEdge.Normal);
             return 0;
         }    
         

@@ -8,6 +8,7 @@ using Xbim.Ifc4.Interfaces;
 using Xbim.Common.XbimExtensions;
 using Xbim.Ifc4.MeasureResource;
 using log4net;
+using LibTessDotNet.Double;
 
 namespace Xbim.Tessellator
 {
@@ -593,7 +594,7 @@ namespace Xbim.Tessellator
                 {
                     if (thisFaceContours.Count == 1 && thisFaceContours[0].Length == 3) //its a triangle just grab it
                     {
-                        triangulatedMesh.AddTriangle(thisFaceContours[0][0].Data, thisFaceContours[0][1].Data, thisFaceContours[0][2].Data, faceId);
+                        triangulatedMesh.AddTriangle((int)thisFaceContours[0][0].Data, (int)thisFaceContours[0][1].Data, (int)thisFaceContours[0][2].Data, faceId);
                         faceId++;
                     }
                     else    //it is multi-sided and may have holes
@@ -607,13 +608,13 @@ namespace Xbim.Tessellator
                         var contourVerts = tess.Vertices;
                         for (var j = 0; j < tess.ElementCount * 3; j++)
                         {
-                            var idx = contourVerts[elements[j]].Data;
+                            var idx = (int)contourVerts[elements[j]].Data;
                             if (idx < 0) //the tessellation added a position to the shape
                             {
                                 //add it to the mesh
                                 triangulatedMesh.AddVertex(contourVerts[elements[j]].Position, ref contourVerts[elements[j]]);
                             }
-                            faceIndices.Add(contourVerts[elements[j]].Data);
+                            faceIndices.Add((int)contourVerts[elements[j]].Data);
                         }
 
                         if (faceIndices.Count > 0)
